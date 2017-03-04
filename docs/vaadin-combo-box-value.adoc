@@ -12,7 +12,7 @@ layout: page
 
 You need to provide the set of items which the user can select with the [propertyname]#items# property.
 Current selection is indicated by the [propertyname]#value# and [propertyname]#selectedItem# properties.
-You can set or change the selection programmatically by setting the [propertyname]#value# property.
+You can set or change the selection programmatically by setting the [propertyname]#value# or [propertyname]#selectedItem# property.
 Doing so also updates the visible fields.
 
 When setting the items declaratively, notice that the attribute value needs to be a valid JSON string. You need to use single quotes for the attribute value and double quotes inside the value (in the JSON string). Alternatively, you can escape the double quotes inside the value.
@@ -44,7 +44,11 @@ Since there are two selection properties, namely [propertyname]#value# and [prop
 an event is fired for each. [propertyname]#value-changed# event contains the selection as a String value,
 whereas [propertyname]#selected-item-changed# contains the selection as an Object.
 
-Note that the order in which these two events are fired might vary depending on the situation.
+Additionally, a [propertyname]#change# event is fired to match the behavior with <select> element.
+
+[NOTE]
+The order in which [propertyname]#value-changed# and [propertyname]#selected-item-changed# events are fired might vary depending on the situation, but
+[propertyname]#change# event should always be last.
 
 [source,javascript]
 ----
@@ -64,7 +68,7 @@ When using the element inside another Polymer element, you can use the declarati
 ----
 <dom-module id="my-element">
   <template>
-    <vaadin-combo-box on-value-change="valueChanged"></vaadin-combo-box>
+    <vaadin-combo-box on-value-changed="valueChanged"></vaadin-combo-box>
   </template>
 </dom-module>
 <script>

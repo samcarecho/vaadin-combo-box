@@ -29,6 +29,29 @@
   </template>
 </test-fixture>
 
+<dom-module id="x-fixed">
+  <template>
+    <div style="position:fixed">
+      <content></content>
+    </div>
+  </template>
+  <script>
+    HTMLImports.whenReady(function() {
+      Polymer({
+        is: 'x-fixed'
+      });
+    });
+  </script>
+</dom-module>
+
+<test-fixture id="fixed-component">
+  <template>
+    <x-fixed>
+      <vaadin-combo-box label='combobox' style='width: 300px'></vaadin-combo-box>
+    </x-fixed>
+  </template>
+</test-fixture>
+
 <script>
   var comboBox;
 
@@ -47,9 +70,6 @@
       var ev = document.createEvent('Event');
       ev.initEvent('resize', true, true);
       window.dispatchEvent(ev);
-    } else { // Old IE
-      var event = document.createEventObject();
-      element.fireEvent('onresize', event);
     }
   }
 
@@ -66,11 +86,16 @@
   describe('overlay', function() {
     beforeEach(function(done) {
       comboBox = fixture('combobox');
+      var comboBoxRect = comboBox.getBoundingClientRect();
       comboBox.items = getItemArray(20);
 
-      wh = window.innerHeight;
-      ww = window.innerWidth;
-      horiCenter =  ww * 0.5;
+      var win = comboBox.ownerDocument.defaultView;
+      // Subtract the combo-box size from the coordinates range in order not to
+      // move it outside the viewport boundaries when changing top and left.
+      // Otherwise it is not nice for debugging.
+      wh = win.innerHeight - comboBoxRect.height;
+      ww = win.innerWidth - comboBoxRect.width;
+      horiCenter = ww * 0.5;
       vertTop = 0;
       vertBottom = wh;
 
@@ -116,6 +141,15 @@
         expect(spy.called).to.be.true;
       });
 
+      it('should reposition on scroll', function() {
+        comboBox.opened = true;
+        comboBox.$.overlay.updateViewportBoundaries = sinon.spy();
+
+        comboBox.fire('scroll', {}, {node: document});
+
+        expect(comboBox.$.overlay.updateViewportBoundaries.callCount).to.eql(1);
+      }),
+
       it('should be aligned with input container', function() {
         comboBox.open();
 
@@ -127,7 +161,7 @@
 
         comboBox.open();
 
-        expect(dropContentRect().left).to.equal(inputContentRect().left);
+        expect(Math.round(dropContentRect().left)).to.equal(Math.round(inputContentRect().left));
 
         expect(dropContentRect().top).to.be.closeTo(inputContentRect().bottom + comboBox.$.overlay.verticalOffset, 1);
       });
@@ -235,6 +269,17 @@
 
     it('should same position when parent has fixed', function(done) {
       var combobox = fixture('fixed').querySelector('vaadin-combo-box');
+
+      combobox.open();
+
+      Polymer.Base.async(function() {
+        expect(position(combobox.$.overlay)).to.eql('fixed');
+        done();
+      }, 1);
+    });
+
+    it('should same position when parent component has fixed', function(done) {
+      var combobox = fixture('fixed-component').querySelector('vaadin-combo-box');
 
       combobox.open();
 
